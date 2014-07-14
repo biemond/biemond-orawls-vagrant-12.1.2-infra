@@ -62,7 +62,7 @@ domain_instances:
      repository_prefix:        "DEV"
      repository_password:      "Welcome01"
      repository_sys_password:  "Welcome01"
-     rcu_database_url:         "wlsdb.example.com:1521:wlsrepos"
+     rcu_database_url:         "wlsdb.example.com:1521:wlsrepos.example.com"
      webtier_enabled:          true
 
 # create and startup the nodemanager
@@ -110,76 +110,97 @@ machines_instances:
     nmtype:         'SSL'
 
 managed_servers_instances:
-      'WebServer1':
-         ensure:                         'present'
-         arguments:                      '-XX:PermSize=256m -XX:MaxPermSize=512m -Xms752m -Xmx1024m -Dweblogic.Stdout=/var/log/weblogic/WebServer1.out -Dweblogic.Stderr=/var/log/weblogic/WebServer1_err.out'
-         listenaddress:                  '10.10.10.21'
-         listenport:                     '8001'
-         logfilename:                    '/var/log/weblogic/WebServer1.log'
-         machine:                        'Node1'
-         sslenabled:                     '1'
-         ssllistenport:                  '8002'
-         sslhostnameverificationignored: '1'
-         jsseenabled:                    '1' 
-      'JmsWlsServer1':
-         ensure:                         'present'
-         arguments:                      '-XX:PermSize=256m -XX:MaxPermSize=256m -Xms752m -Xmx752m -Dweblogic.Stdout=/var/log/weblogic/JmsWlsServer1.out -Dweblogic.Stderr=/var/log/weblogic/JmsWlsServer1_err.out'
-         listenaddress:                  '10.10.10.21'
-         listenport:                     '8021'
-         logfilename:                    '/var/log/weblogic/JmsWlsServer1.log'
-         machine:                        'Node1'
-         sslenabled:                     '1'
-         ssllistenport:                  '8022'
-         sslhostnameverificationignored: '1'
-         jsseenabled:                    '1' 
+  'WebServer1':
+     ensure:                         'present'
+     arguments:                      
+       - '-XX:PermSize=256m'
+       - '-XX:MaxPermSize=512m'
+       - '-Xms752m'
+       - '-Xmx1024m'
+       - '-Dweblogic.Stdout=/var/log/weblogic/WebServer1.out'
+       - '-Dweblogic.Stderr=/var/log/weblogic/WebServer1_err.out'
+     listenaddress:                  '10.10.10.21'
+     listenport:                     '8001'
+     logfilename:                    '/var/log/weblogic/WebServer1.log'
+     machine:                        'Node1'
+     sslenabled:                     '1'
+     ssllistenport:                  '8002'
+     sslhostnameverificationignored: '1'
+     jsseenabled:                    '1' 
+  'JmsWlsServer1':
+     ensure:                         'present'
+     arguments:                      
+       - '-XX:PermSize=256m'
+       - '-XX:MaxPermSize=256m'
+       - '-Xms752m'
+       - '-Xmx752m'
+       - '-Dweblogic.Stdout=/var/log/weblogic/JmsWlsServer1.out'
+       - '-Dweblogic.Stderr=/var/log/weblogic/JmsWlsServer1_err.out'
+     listenaddress:                  '10.10.10.21'
+     listenport:                     '8021'
+     logfilename:                    '/var/log/weblogic/JmsWlsServer1.log'
+     machine:                        'Node1'
+     sslenabled:                     '1'
+     ssllistenport:                  '8022'
+     sslhostnameverificationignored: '1'
+     jsseenabled:                    '1' 
 
 # create cluster and assign the managed servers
 cluster_instances:
-      'WebCluster':
-        ensure:         'present'
-        messagingmode:  'unicast'
-        migrationbasis: 'consensus'
-        servers:        'WebServer1'
-      'JmsCluster':
-        ensure:         'present'
-        messagingmode:  'unicast'
-        migrationbasis: 'consensus'
-        servers:        'JmsWlsServer1'
+  'WebCluster':
+    ensure:         'present'
+    messagingmode:  'unicast'
+    migrationbasis: 'consensus'
+    servers:        
+      - 'WebServer1'
+  'JmsCluster':
+    ensure:         'present'
+    messagingmode:  'unicast'
+    migrationbasis: 'consensus'
+    servers:        
+      - 'JmsWlsServer1'
 
 file_persistence_folders:
-   '/opt/oracle/wlsdomains/domains/adf_domain/JmsPersistence1':
-      ensure:     directory
-      recurse:    false
-      replace:    false
-      mode:       '0775'
-      owner:      'oracle'
-      group:      'dba'
-
+  '/opt/oracle/wlsdomains/domains/adf_domain/JmsPersistence1':
+    ensure:     directory
+    recurse:    false
+    replace:    false
+    mode:       '0775'
+    owner:      'oracle'
+    group:      'dba'
 
 file_persistence_store_instances:
   'jmsFile1':
     ensure:         'present'
     directory:      'JmsPersistence1'
-    target:         'JmsWlsServer1'
-    targettype:     'Server'
+    target:         
+      - 'JmsWlsServer1'
+    targettype:     
+      - 'Server'
 
 jmsserver_instances:
-   'jmsServer1':
-     ensure:              'present'
-     target:              'JmsWlsServer1'
-     targettype:          'Server'
-     persistentstore:     'jmsFile1'
-     persistentstoretype: 'FileStore'
+  'jmsServer1':
+    ensure:              'present'
+    target:              
+      - 'JmsWlsServer1'
+    targettype:          
+      - 'Server'
+    persistentstore:     'jmsFile1'
+    persistentstoretype: 'FileStore'
 
 jms_modules_instances:
-   'jmsClusterModule':
-     ensure:      'present'
-     target:      'JmsCluster'
-     targettype:  'Cluster'
+  'jmsClusterModule':
+    ensure:      'present'
+    target:      
+      - 'JmsCluster'
+    targettype:  
+      - 'Cluster'
 
 jms_subdeployments_instances:
-   'jmsClusterModule:jmsServers':
-      ensure:     'present'
-      target:     'jmsServer1'
-      targettype: 'JMSServer'
+  'jmsClusterModule:jmsServers':
+    ensure:     'present'
+    target:     
+      - 'jmsServer1'
+    targettype: 
+      - 'JMSServer'
 

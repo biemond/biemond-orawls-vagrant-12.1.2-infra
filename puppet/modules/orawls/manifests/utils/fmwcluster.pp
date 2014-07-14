@@ -4,11 +4,11 @@
 ##
 define orawls::utils::fmwcluster (
   $version                    = hiera('wls_version'               , 1111),  # 1036|1111|1211|1212
-  $weblogic_home_dir          = hiera('wls_weblogic_home_dir'     , undef), # /opt/oracle/middleware11gR1/wlserver_103
-  $middleware_home_dir        = hiera('wls_middleware_home_dir'   , undef), # /opt/oracle/middleware11gR1
-  $jdk_home_dir               = hiera('wls_jdk_home_dir'          , undef), # /usr/java/jdk1.7.0_45
+  $weblogic_home_dir          = hiera('wls_weblogic_home_dir'), # /opt/oracle/middleware11gR1/wlserver_103
+  $middleware_home_dir        = hiera('wls_middleware_home_dir'), # /opt/oracle/middleware11gR1
+  $jdk_home_dir               = hiera('wls_jdk_home_dir'), # /usr/java/jdk1.7.0_45
   $wls_domains_dir            = hiera('wls_domains_dir'           , undef),
-  $domain_name                = hiera('domain_name'               , undef),
+  $domain_name                = hiera('domain_name'),
   $adminserver_name           = hiera('domain_adminserver'        , "AdminServer"),
   $adminserver_address        = hiera('domain_adminserver_address', "localhost"),
   $adminserver_port           = hiera('domain_adminserver_port'   , 7001),
@@ -22,10 +22,10 @@ define orawls::utils::fmwcluster (
   $soa_enabled                = false, # true|false
   $repository_prefix          = hiera('repository_prefix'         , "DEV"),
   $weblogic_user              = hiera('wls_weblogic_user'         , "weblogic"),
-  $weblogic_password          = hiera('domain_wls_password'       , undef),
-  $os_user                    = hiera('wls_os_user'               , undef), # oracle
-  $os_group                   = hiera('wls_os_group'              , undef), # dba
-  $download_dir               = hiera('wls_download_dir'          , undef), # /data/install
+  $weblogic_password          = hiera('domain_wls_password'),
+  $os_user                    = hiera('wls_os_user'), # oracle
+  $os_group                   = hiera('wls_os_group'), # dba
+  $download_dir               = hiera('wls_download_dir'), # /data/install
   $log_output                 = false, # true|false
 )
 {
@@ -71,14 +71,13 @@ define orawls::utils::fmwcluster (
 
   if ($continue) {
 
-    if ( $osb_enabled  ) {
+    if ( $osb_enabled  == true ) {
       $last_step = "execwlst osb-createUDD.py ${title}"
     } else  {
       $last_step = "execwlst soa-bpm-createUDD.py ${title}"
     }
 
-    if ( $soa_enabled ) {
-
+    if ( $soa_enabled  == true) {
       # the domain.py used by the wlst
       file { "migrateSecurityStore.py ${domain_name} ${title}":
         ensure  => present,
@@ -219,7 +218,7 @@ define orawls::utils::fmwcluster (
     }
     if $osb_enabled == true {
 
-      if ( $soa_enabled  ) {
+      if ( $soa_enabled  == true ) {
         $last_soa_step = "execwlst soa-bpm-createUDD.py ${title}"
       } else  {
         $last_soa_step = "execwlst assignOsbSoaBpmBamToClusters.py ${title}"
@@ -273,6 +272,29 @@ define orawls::utils::fmwcluster (
       require                    => Exec[$last_step],
     }
 
+    if ( $soa_enabled  == true  ) {
+
+      file { "changeMachineOfAdminserver ${domain_name} ${title}":
+        ensure  => present,
+        path    => "${download_dir}/changeAdminServerNodemanager_${domain_name}.py",
+        content => template("orawls/wlst/wlstexec/fmw/changeAdminServerNodemanager.py.erb"),
+        replace => true,
+        backup  => false,
+        mode    => '0775',
+        owner   => $os_user,
+        group   => $os_group,
+      }
+      exec { "execwlst changeMachineOfAdminserver ${domain} ${title}":
+        command     => "${middleware_home_dir}/oracle_common/common/bin/wlst.sh ${download_dir}/changeAdminServerNodemanager_${domain_name}.py ${weblogic_password}",
+        environment => ["JAVA_HOME=${jdk_home_dir}"],
+        before      => Exec["execwlst changeWorkmanagers.py ${title}"],
+        require     => [File["changeMachineOfAdminserver ${domain_name} ${title}"],
+                        Orawls::Control["StartupAdminServerForSoa${title}"]],
+        timeout     => 0,
+        logoutput   => $log_output,
+      }
+    }
+
     # the py script used by the wlst
     file { "${download_dir}/changeWorkmanagers${title}.py":
       ensure  => present,
@@ -294,7 +316,9 @@ define orawls::utils::fmwcluster (
       group       => $os_group,
       logoutput   => $log_output,
       require     => [File["${download_dir}/changeWorkmanagers${title}.py"],
-                      Orawls::Control["StartupAdminServerForSoa${title}"],]
+                      Orawls::Control["StartupAdminServerForSoa${title}"]],
     }
+
+
   }
 }
