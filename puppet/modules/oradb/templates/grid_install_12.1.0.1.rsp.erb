@@ -6,7 +6,7 @@
 ##                                                                           ##
 ## Each variable is associated with a comment. The comment                   ##
 ## can help to populate the variables with the appropriate                   ##
-## values.							             ##
+## values.                                                                   ##
 ##                                                                           ##
 ## IMPORTANT NOTE: This file contains plain text passwords and               ##
 ## should be secured to have read permission only by oracle user             ##
@@ -22,20 +22,21 @@
 ##  - Fill out section G if OCR and voting disk should be placed on ASM      ##
 ##                                                                           ##
 ## To install and configure 'Grid Infrastructure for Standalone server'      ##
-##  - Fill out sections A,B and G                                           ##
+##  - Fill out sections A,B and G                                            ##
 ##                                                                           ##
 ## To install software for 'Grid Infrastructure'                             ##
-##  - Fill out sections A,B and C                                           ##
+##  - Fill out sections A,B and C                                            ##
 ##                                                                           ##
 ## To upgrade clusterware and/or Automatic storage management of earlier     ##
 ## releases                                                                  ##
-##  - Fill out sections A,B,C,D and H                                       ##
+##  - Fill out sections A,B,C,D and H                                        ##
 ##                                                                           ##
 ###############################################################################
+
 #------------------------------------------------------------------------------
 # Do not change the following system generated value. 
 #------------------------------------------------------------------------------
-oracle.install.responseFileVersion=/oracle/install/rspfmt_crsinstall_response_schema_v11_2_0
+oracle.install.responseFileVersion=/oracle/install/rspfmt_crsinstall_response_schema_v12.1.0
 
 ###############################################################################
 #                                                                             #
@@ -53,7 +54,7 @@ ORACLE_HOSTNAME=
 
 #-------------------------------------------------------------------------------
 # Specify the location which holds the inventory files.
-# This is an optional parameter if installing on
+# This is an optional parameter if installing on  
 # Windows based Operating System.
 #-------------------------------------------------------------------------------
 INVENTORY_LOCATION=<%= @oraInventory %>
@@ -91,18 +92,20 @@ INVENTORY_LOCATION=<%= @oraInventory %>
 # Example : SELECTED_LANGUAGES=en,fr,ja
 #
 # Specify value as the following to select all the languages.
-# Example : SELECTED_LANGUAGES=all_langs
+# Example : SELECTED_LANGUAGES=all_langs  
 #-------------------------------------------------------------------------------
 SELECTED_LANGUAGES=en
 
 #-------------------------------------------------------------------------------
 # Specify the installation option.
-# Allowed values: CRS_CONFIG or HA_CONFIG or UPGRADE or CRS_SWONLY
+# Allowed values: CRS_CONFIG or HA_CONFIG or UPGRADE or CRS_SWONLY or HA_SWONLY
 #   - CRS_CONFIG : To configure Grid Infrastructure for cluster
 #   - HA_CONFIG  : To configure Grid Infrastructure for stand alone server
 #   - UPGRADE    : To upgrade clusterware software of earlier release
 #   - CRS_SWONLY : To install clusterware files only (can be configured for cluster 
-#                or stand alone server later)
+#                  or stand alone server later)
+#   - HA_SWONLY  : To install clusterware files only (can be configured for stand 
+#                  alone server later. This is only supported on Windows.)
 #-------------------------------------------------------------------------------
 oracle.install.option=<%= @gridType %>
 
@@ -120,7 +123,7 @@ ORACLE_HOME=<%= @gridHome %>
 #                                                                              #
 #                              SECTION B - GROUPS                              #
 #                                                                              #
-#   The following three groups need to be assigned for all GI installations.  #
+#   The following three groups need to be assigned for all GI installations.   #
 #   OSDBA and OSOPER can be the same or different.  OSASM must be different    #
 #   than the other two.                                                        #
 #   The value to be specified for OSDBA, OSOPER and OSASM group is only for    #
@@ -157,13 +160,21 @@ oracle.install.crs.config.gpnp.scanName=<%= @scan_name %>
 #-------------------------------------------------------------------------------
 # Specify a unused port number for SCAN service
 #-------------------------------------------------------------------------------
+
 oracle.install.crs.config.gpnp.scanPort=<%= @scan_port %>
 
 ################################################################################
 #                                                                              #
-#                           SECTION D - CLUSTER & GNS                          #
+#                           SECTION D - CLUSTER & GNS                         #
 #                                                                              #
 ################################################################################
+#-------------------------------------------------------------------------------
+# Specify the type of cluster you would like to configure
+# Allowed values: FLEX and STANDARD
+#-------------------------------------------------------------------------------
+oracle.install.crs.config.ClusterType=
+
+
 #-------------------------------------------------------------------------------
 # Specify a name for the Cluster you are creating.
 #
@@ -181,44 +192,79 @@ oracle.install.crs.config.gpnp.configureGNS=false
 
 #-------------------------------------------------------------------------------
 # Applicable only if you choose to configure GNS
-# Specify the GNS subdomain and an unused virtual hostname for GNS service
-# Additionally you may also specify if VIPs have to be autoconfigured
-#
-# Value for oracle.install.crs.config.autoConfigureClusterNodeVIP should be true
-# if GNS is being configured(oracle.install.crs.config.gpnp.configureGNS), false
-# otherwise.
+# Specify 'true' if you would like to assign SCAN name VIP and Node VIPs by DHCP
+# , else specify 'false'
 #-------------------------------------------------------------------------------
-oracle.install.crs.config.gpnp.gnsSubDomain=
-oracle.install.crs.config.gpnp.gnsVIPAddress=
 oracle.install.crs.config.autoConfigureClusterNodeVIP=
 
 #-------------------------------------------------------------------------------
-# Specify a list of public node names, and virtual hostnames that have to be 
-# part of the cluster.
+# Applicable only if you choose to configure GNS
+# Specify the type of GNS configuration for cluster
+# Allowed values are: CREATE_NEW_GNS and USE_SHARED_GNS
+#-------------------------------------------------------------------------------
+oracle.install.crs.config.gpnp.gnsOption=
+
+#-------------------------------------------------------------------------------
+# Applicable only if SHARED_GNS is being configured for cluster
+# Specify the path to the GNS client data file
+#-------------------------------------------------------------------------------
+oracle.install.crs.config.gpnp.gnsClientDataFile=
+
+#-------------------------------------------------------------------------------
+# Applicable only if you choose to configure GNS for this cluster
+# oracle.install.crs.config.gpnp.gnsOption=CREATE_NEW_GNS
+# Specify the GNS subdomain and an unused virtual hostname for GNS service
+#-------------------------------------------------------------------------------
+oracle.install.crs.config.gpnp.gnsSubDomain=
+oracle.install.crs.config.gpnp.gnsVIPAddress=
+
+
+
+#-------------------------------------------------------------------------------
+# Specify the list of nodes that have to be configured to be part of the cluster.
 #
-# The list should a comma-separated list of nodes.  Each entry in the list 
-# should be a colon-separated string that contains 2 fields.
-#
+# The list should a comma-separated list of tuples.  Each tuple should be a
+# colon-separated string that contains
+# - 2 fields if configuring a Standard Cluster, or 
+# - 3 fields if configuring a Flex Cluster
+# 
 # The fields should be ordered as follows:
-# 1. The first field is for public node name.
-# 2. The second field is for virtual host name
-#    (specify as AUTO if you have chosen 'auto configure for VIP'
+# 1. The first field should be the public node name.
+# 2. The second field should be the virtual host name
+#    (Should be specified as AUTO if you have chosen 'auto configure for VIP'
 #     i.e. autoConfigureClusterNodeVIP=true)
+# 3. The third field indicates the role of node (HUB,LEAF). This has to 
+#    be provide only if Flex Cluster is being configured.
 #
-# Example: oracle.install.crs.config.clusterNodes=node1:node1-vip,node2:node2-vip
+# Examples
+# For configuring Standard Cluster: oracle.install.crs.config.clusterNodes=node1:node1-vip,node2:node2-vip
+# For configuring Flex Cluster: oracle.install.crs.config.clusterNodes=node1:node1-vip:HUB,node2:node2-vip:LEAF
+#
+#
 #-------------------------------------------------------------------------------
 oracle.install.crs.config.clusterNodes=<%= @cluster_nodes %>
 
 #-------------------------------------------------------------------------------
 # The value should be a comma separated strings where each string is as shown below
-# InterfaceName:SubnetAddress:InterfaceType
-# where InterfaceType can be either "1", "2", or "3"
-# (1 indicates public, 2 indicates private, and 3 indicates the interface is not used)
+# InterfaceName:SubnetMask:InterfaceType
+# where InterfaceType can be either "1", "2", "3", "4", or "5"
+# InterfaceType stand for the following values
+#   - 1 : PUBLIC
+#   - 2 : PRIVATE
+#   - 3 : DO NOT USE
+#   - 4 : ASM
+#   - 5 : ASM & PRIVATE
 #
 # For example: eth0:140.87.24.0:1,eth1:10.2.1.0:2,eth2:140.87.52.0:3
 #
 #-------------------------------------------------------------------------------
 oracle.install.crs.config.networkInterfaceList=<%= @network_interface_list %>
+
+#-------------------------------------------------------------------------------
+# Specify 'true' if you would like to configure Management Database Option, else
+# specify 'false'
+#-------------------------------------------------------------------------------
+oracle.install.crs.managementdb.configure=
 
 ################################################################################
 #                                                                              #
@@ -229,33 +275,20 @@ oracle.install.crs.config.networkInterfaceList=<%= @network_interface_list %>
 #-------------------------------------------------------------------------------
 # Specify the type of storage to use for Oracle Cluster Registry(OCR) and Voting
 # Disks files
-#   - ASM_STORAGE
-#   - FILE_SYSTEM_STORAGE 
+#   - LOCAL_ASM_STORAGE
+#   - FLEX_ASM_STORAGE
+#   - FILE_SYSTEM_STORAGE
+# If configuring a Flex Cluster, FLEX_ASM_STORAGE is the only allowed value 
 #-------------------------------------------------------------------------------
 oracle.install.crs.config.storageOption=<%= @storage_option %>
-
-#-------------------------------------------------------------------------------
-# THIS PROPERTY NEEDS TO BE FILLED ONLY IN CASE OF WINDOWS INSTALL. 
-# Specify a comma separated list of strings where each string is as shown below:
-# Disk Number:Partition Number:Drive Letter:Format Option
-# The Disk Number and Partition Number should refer to the location which has to 
-# be formatted. The Drive Letter should refer to the drive letter that has to be 
-# assigned. "Format Option" can be either of the following -
-#   - SOFTWARE : Format to place software binaries.
-#   - DATA     : Format to place the OCR/VDSK files.
-#
-# For example: 1:2:P:DATA,1:3:Q:SOFTWARE,1:4:R:DATA,1:5:S:DATA
-#
-#------------------------------------------------------------------------------- 
-oracle.install.crs.config.sharedFileSystemStorage.diskDriveMapping=
 
 #-------------------------------------------------------------------------------
 # These properties are applicable only if FILE_SYSTEM_STORAGE is chosen for 
 # storing OCR and voting disk
 # Specify the location(s) and redundancy for OCR and voting disks
+# Multiple locations can be specified, separated by commas.
 # In case of windows, mention the drive location that is specified to be
 # formatted for DATA in the above property.
-# Multiple locations can be specified, separated by commas
 # Redundancy can be one of these:
 #     EXTERNAL - one(1) location should be specified for OCR and voting disk
 #     NORMAL - three(3) locations should be specified for OCR and voting disk
@@ -263,15 +296,12 @@ oracle.install.crs.config.sharedFileSystemStorage.diskDriveMapping=
 #     For Unix based Operating System:
 #     oracle.install.crs.config.sharedFileSystemStorage.votingDiskLocations=/oradbocfs/storage/vdsk1,/oradbocfs/storage/vdsk2,/oradbocfs/storage/vdsk3
 #     oracle.install.crs.config.sharedFileSystemStorage.ocrLocations=/oradbocfs/storage/ocr1,/oradbocfs/storage/ocr2,/oradbocfs/storage/ocr3
-#     For Windows based Operating System:
-#     oracle.install.crs.config.sharedFileSystemStorage.votingDiskLocations=P:\vdsk1,R:\vdsk2,S:\vdsk3
-#     oracle.install.crs.config.sharedFileSystemStorage.ocrLocations=P:\ocr1,R:\ocr2,S:\ocr3
+#     For Windows based Operating System OCR/VDSK on shared storage is not supported.
 #-------------------------------------------------------------------------------
 oracle.install.crs.config.sharedFileSystemStorage.votingDiskLocations=
 oracle.install.crs.config.sharedFileSystemStorage.votingDiskRedundancy=NORMAL
 oracle.install.crs.config.sharedFileSystemStorage.ocrLocations=
 oracle.install.crs.config.sharedFileSystemStorage.ocrRedundancy=NORMAL
-
 ################################################################################
 #                                                                              #
 #                               SECTION F - IPMI                               #
@@ -323,7 +353,7 @@ oracle.install.asm.diskGroup.redundancy=<%= @disk_redundancy %>
 
 #-------------------------------------------------------------------------------
 # Allocation unit size to be used by ASM.
-# It can be one of the following values 
+# It can be one of the following values
 #   - 1
 #   - 2
 #   - 4
@@ -340,7 +370,7 @@ oracle.install.asm.diskGroup.AUSize=1
 #-------------------------------------------------------------------------------
 # List of disks to create a ASM DiskGroup
 #
-# Example: 
+# Example:
 #     For Unix based Operating System:
 #     oracle.install.asm.diskGroup.disks=/oracle/asm/disk1,/oracle/asm/disk2
 #     For Windows based Operating System:
@@ -348,6 +378,7 @@ oracle.install.asm.diskGroup.AUSize=1
 #
 #-------------------------------------------------------------------------------
 oracle.install.asm.diskGroup.disks=<%= @disks %>
+
 #-------------------------------------------------------------------------------
 # The disk discovery string to be used to discover the disks used create a ASM DiskGroup
 #
@@ -365,50 +396,43 @@ oracle.install.asm.diskGroup.diskDiscoveryString=<%= @disk_discovery_string %>
 #-------------------------------------------------------------------------------
 oracle.install.asm.monitorPassword=<%= @asm_monitor_password %>
 
+
 ################################################################################
 #                                                                              #
 #                             SECTION H - UPGRADE                              #
 #                                                                              #
 ################################################################################
 #-------------------------------------------------------------------------------
-# Specify nodes for Upgrade.
-# For upgrade on Windows, installer overrides the value of this parameter to include
-# all the nodes of the cluster. However, the stack is upgraded one node at a time. 
-# Hence, this parameter may be left blank for Windows.
-# Example: oracle.install.crs.upgrade.clusterNodes=node1,node2
+# Specify whether to ignore down nodes during upgrade operation.
+# Value should be 'true' to ignore down nodes otherwise specify 'false'
 #-------------------------------------------------------------------------------
-oracle.install.crs.upgrade.clusterNodes=
+oracle.install.crs.config.ignoreDownNodes=
 
-#-------------------------------------------------------------------------------
-# For RAC-ASM only. oracle.install.asm.upgradeASM=true/false
-# Value should be 'true' while upgrading Cluster ASM of version 11gR2(11.2.0.1.0) and above
-#-------------------------------------------------------------------------------
-oracle.install.asm.upgradeASM=false
 #------------------------------------------------------------------------------
 # Specify the auto-updates option. It can be one of the following:
 #   - MYORACLESUPPORT_DOWNLOAD
 #   - OFFLINE_UPDATES
 #   - SKIP_UPDATES
 #------------------------------------------------------------------------------
-oracle.installer.autoupdates.option=SKIP_UPDATES
+oracle.installer.autoupdates.option=
 
 #------------------------------------------------------------------------------
 # In case MYORACLESUPPORT_DOWNLOAD option is chosen, specify the location where
 # the updates are to be downloaded.
-# In case OFFLINE_UPDATES option is chosen, specify the location where the updates 
+# In case OFFLINE_UPDATES option is chosen, specify the location where the updates
 # are present.
 #------------------------------------------------------------------------------
 oracle.installer.autoupdates.downloadUpdatesLoc=
 
 #------------------------------------------------------------------------------
-# Specify the My Oracle Support Account Username which has the patches download privileges
+# Specify the My Oracle Support Account Username which has the patches download privileges  
 # to be used for software updates.
-#
 #  Example   : AUTOUPDATES_MYORACLESUPPORT_USERNAME=abc@oracle.com
 #------------------------------------------------------------------------------
 AUTOUPDATES_MYORACLESUPPORT_USERNAME=
+
 #------------------------------------------------------------------------------
-# Specify the My Oracle Support Account Username password which has the patches download privileges
+# Specify the My Oracle Support Account Username password which has the patches download privileges  
 # to be used for software updates.
 #
 # Example    : AUTOUPDATES_MYORACLESUPPORT_PASSWORD=password
@@ -423,11 +447,12 @@ AUTOUPDATES_MYORACLESUPPORT_PASSWORD=
 PROXY_HOST=
 
 #------------------------------------------------------------------------------
-# Specify the proxy port number. Should be Numeric and at least 2 chars.
+# Specify the proxy port number. Should be Numeric and atleast 2 chars.
 #
 # Example    : PROXY_PORT=25 
 #------------------------------------------------------------------------------
 PROXY_PORT=
+
 #------------------------------------------------------------------------------
 # Specify the proxy user name. Leave PROXY_USER and PROXY_PWD 
 # blank if your proxy server requires no authentication.
@@ -435,6 +460,7 @@ PROXY_PORT=
 # Example    : PROXY_USER=username 
 #------------------------------------------------------------------------------
 PROXY_USER=
+
 #------------------------------------------------------------------------------
 # Specify the proxy password. Leave PROXY_USER and PROXY_PWD  
 # blank if your proxy server requires no authentication.
@@ -444,9 +470,8 @@ PROXY_USER=
 PROXY_PWD=
 
 #------------------------------------------------------------------------------
-# Specify the proxy realm. 
+# Specify the proxy realm.
 #
-# Example    : PROXY_REALM=metalink 
+# Example    : PROXY_REALM=metalink
 #------------------------------------------------------------------------------
 PROXY_REALM=
-
